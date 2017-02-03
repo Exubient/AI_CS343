@@ -114,9 +114,7 @@ def breadthFirstSearch(problem):
         if problem.isGoalState(node):
             return path
         for state, direction, cost in problem.getSuccessors(node):
-            if state in visited:
-                pass
-            else:
+            if state not in visited:
                 fringe.push((state, path + [direction]))
                 visited.append(state)
     return None
