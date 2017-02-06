@@ -88,17 +88,17 @@ def depthFirstSearch(problem):
     """
     "*** YOUR CODE HERE ***"
     fringe = util.Stack()
-    closed = set() #visited unique set
+    visited = set() #visited unique set
     fringe.push((problem.getStartState(), []))
 
     while not fringe.isEmpty():
         current,path=fringe.pop() #get data from pop
         if problem.isGoalState(current): 
             return path #you have reached goal
-        if current not in closed:
-            closed.add(current)
+        if current not in visited:
+            visited.add(current)
             for state, direction,cost in problem.getSuccessors(current):
-                if state not in closed:
+                if state not in visited:
                     fringe.push((state,path+[direction]))
     return None
 
