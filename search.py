@@ -4,7 +4,7 @@
 # educational purposes provided that (1) you do not distribute or publish
 # solutions, (2) you retain this notice, and (3) you provide clear
 # attribution to UC Berkeley, including a link to http://ai.berkeley.edu.
-# 
+#
 # Attribution Information: The Pacman AI projects were developed at UC Berkeley.
 # The core projects and autograders were primarily created by John DeNero
 # (denero@cs.berkeley.edu) and Dan Klein (klein@cs.berkeley.edu).
@@ -18,6 +18,7 @@ Pacman agents (in searchAgents.py).
 """
 
 import util
+
 
 class SearchProblem:
     """
@@ -46,7 +47,7 @@ class SearchProblem:
           state: Search state
 
         For a given state, this should return a list of triples, (successor,
-        action, stepCost), where 'successor' is a successor to the current
+        action, stepCost), where 'successor' is a successor to the node
         state, 'action' is the action required to get there, and 'stepCost' is
         the incremental cost of expanding to that successor.
         """
@@ -70,7 +71,8 @@ def tinyMazeSearch(problem):
     from game import Directions
     s = Directions.SOUTH
     w = Directions.WEST
-    return  [s, s, w, s, w, w, s, w]
+    return [s, s, w, s, w, w, s, w]
+
 
 def depthFirstSearch(problem):
     """
@@ -87,28 +89,30 @@ def depthFirstSearch(problem):
     print "Start's successors:", problem.getSuccessors(problem.getStartState())
     """
     "*** YOUR CODE HERE ***"
-    fringe = util.Stack()
-    visited = set() #visited unique set
+    fringe = util.Stack() #stack as fringe
+    visited = set()  #set as visited
     fringe.push((problem.getStartState(), []))
 
     while not fringe.isEmpty():
-        current,path=fringe.pop() #get data from pop
-        if problem.isGoalState(current): 
-            return path #you have reached goal
-        if current not in visited:
-            visited.add(current)
-            for state, direction,cost in problem.getSuccessors(current):
+        node, path = fringe.pop()  
+        if problem.isGoalState(node):
+            return path  
+        if node not in visited:
+            visited.add(node)
+            for state, direction, cost in problem.getSuccessors(node):
                 if state not in visited:
-                    fringe.push((state,path+[direction]))
+                    fringe.push((state, path + [direction]))
     return None
+
 
 def breadthFirstSearch(problem):
     """Search the shallowest nodes in the search tree first."""
     "*** YOUR CODE HERE ***"
-    fringe = util.Queue()
-    visited = []    
+    fringe = util.Queue() #queue as fringe
+    visited = [] #set as visited
     fringe.push((problem.getStartState(), []))
     visited.append(problem.getStartState())
+
     while not fringe.isEmpty():
         node, path = fringe.pop()
         if problem.isGoalState(node):
@@ -123,25 +127,50 @@ def breadthFirstSearch(problem):
 def uniformCostSearch(problem):
     """Search the node of least total cost first."""
     "*** YOUR CODE HERE ***"
-    pque = util.PriorityQueue()
-    pque.push((problem.getStartState(), 0, []), 0)
-    visited = {}
+    fringe = util.PriorityQueue() #priority queue as fringe
+    visited = {} #dictionary as visited
+    fringe.push((problem.getStartState(), 0, []), 0)
     visited[problem.getStartState()] = 0
-    while not pque.isEmpty():
-        state, cost, actions = pque.pop()
-        if problem
+
+    while not fringe.isEmpty():
+        node, sum_cost, path = fringe.pop()
+        if problem.isGoalState(node):
+            return path
+        for state, direction, cost in problem.getSuccessors(node):
+            if state not in visited or visited[state] > sum_cost + cost:
+                visited[state] = sum_cost + cost
+                fringe.push((state, sum_cost + cost, path +
+                             [direction]), sum_cost + cost)
+    return None
 
 def nullHeuristic(state, problem=None):
     """
-    A heuristic function estimates the cost from the current state to the nearest
+    A heuristic function estimates the cost from the node state to the nearest
     goal in the provided SearchProblem.  This heuristic is trivial.
     """
     return 0
 
+
 def aStarSearch(problem, heuristic=nullHeuristic):
     """Search the node that has the lowest combined cost and heuristic first."""
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    fringe = util.PriorityQueue() #priority queue as fringe
+    visited = {} #dictionary as visited
+    fringe.push((problem.getStartState(), heuristic(problem.getStartState(),problem), []), heuristic(problem.getStartState(),problem))
+    visited[problem.getStartState()] = heuristic(problem.getStartState(),problem)
+
+    while not fringe.isEmpty():
+        node, sum_cost, path = fringe.pop()
+        current_heuristic = heuristic(node, problem)
+        if problem.isGoalState(node):
+            return path
+        for state, direction, cost in problem.getSuccessors(node):
+            next_heuristic = heuristic(state, problem)
+            if state not in visited or visited[state] > next_heuristic - current_heuristic + sum_cost + cost:
+                visited[state] = next_heuristic - current_heuristic + sum_cost + cost
+                fringe.push((state, sum_cost + cost, path +
+                             [direction]), sum_cost + cost)
+    return None
 
 
 # Abbreviations
