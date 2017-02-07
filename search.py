@@ -154,24 +154,42 @@ def nullHeuristic(state, problem=None):
 def aStarSearch(problem, heuristic=nullHeuristic):
     """Search the node that has the lowest combined cost and heuristic first."""
     "*** YOUR CODE HERE ***"
-    fringe = util.PriorityQueue() #priority queue as fringe
-    visited = {} #dictionary as visited
-    fringe.push((problem.getStartState(), heuristic(problem.getStartState(),problem), []), heuristic(problem.getStartState(),problem))
-    visited[problem.getStartState()] = heuristic(problem.getStartState(),problem)
+    cost = lambda aPath: problem.getCostOfActions([x[1] for x in aPath]) + heuristic(aPath[len(aPath)-1][0], problem)
+    fringe = util.PriorityQueueWithFunction(cost)
 
-    while not fringe.isEmpty():
-        node, sum_cost, path = fringe.pop()
-        current_heuristic = heuristic(node, problem)
-        if problem.isGoalState(node):
-            return path
-        for state, direction, cost in problem.getSuccessors(node):
-            next_heuristic = heuristic(state, problem)
-            if state not in visited or visited[state] > next_heuristic - current_heuristic + sum_cost + cost:
-                visited[state] = next_heuristic - current_heuristic + sum_cost + cost
-                fringe.push((state, sum_cost + cost, path +
-                             [direction]), sum_cost + cost)
-    return None
+    explored = []
+    fringe.push([(problem.getStartState(), "Stop", 0)])
 
+    while not fringe.isEmpty() :
+        #print "fringe: ", fringe.heap
+        path = fringe.pop()
+        #print "path len: ", len(path)
+        #print "path: ", path
+
+        s = path[len(path) - 1]
+        s = s[0]
+
+        #print "s: ", s
+        if problem.isGoalState(s) :
+            #print "FOUND SOLUTION: ", [x[1] for x in path]
+            return[x[1] for x in path][1:]
+
+        if s not in explored :
+            explored.append(s)
+
+    #print "EXPLORING: ", s
+            for successor in problem.getSuccessors(s) :
+        #print "SUCCESSOR: ", successor
+                if successor[0] not in explored :
+                    successorPath = path[:]
+                    successorPath.append(successor)
+    #print "successorPath: ", successorPath
+                    fringe.push(successorPath)
+                #else:
+                    #print successor[0], " IS ALREADY EXPLORED!!"
+    return[]
+
+    #util.raiseNotDefined()
 
 # Abbreviations
 bfs = breadthFirstSearch
