@@ -154,42 +154,42 @@ def nullHeuristic(state, problem=None):
 def aStarSearch(problem, heuristic=nullHeuristic):
     """Search the node that has the lowest combined cost and heuristic first."""
     "*** YOUR CODE HERE ***"
+
     cost = lambda aPath: problem.getCostOfActions([x[1] for x in aPath]) + heuristic(aPath[len(aPath)-1][0], problem)
-    fringe = util.PriorityQueueWithFunction(cost)
+    frontier = util.PriorityQueueWithFunction(cost)
 
     explored = []
-    fringe.push([(problem.getStartState(), "Stop", 0)])
-
-    while not fringe.isEmpty() :
-        #print "fringe: ", fringe.heap
-        path = fringe.pop()
+    frontier.push([(problem.getStartState(), "Stop" , 0)])
+    
+    while not frontier.isEmpty():
+        #print "frontier: ", frontier.heap
+        path = frontier.pop()
         #print "path len: ", len(path)
         #print "path: ", path
-
-        s = path[len(path) - 1]
+        
+        s = path[len(path)-1]
         s = s[0]
-
         #print "s: ", s
-        if problem.isGoalState(s) :
+        if problem.isGoalState(s):
             #print "FOUND SOLUTION: ", [x[1] for x in path]
-            return[x[1] for x in path][1:]
-
-        if s not in explored :
+            return [x[1] for x in path][1:]
+            
+        if s not in explored:
             explored.append(s)
-
-    #print "EXPLORING: ", s
-            for successor in problem.getSuccessors(s) :
-        #print "SUCCESSOR: ", successor
-                if successor[0] not in explored :
+            #print "EXPLORING: ", s
+            
+            for successor in problem.getSuccessors(s):
+                #print "SUCCESSOR: ", successor
+                if successor[0] not in explored:
                     successorPath = path[:]
                     successorPath.append(successor)
-    #print "successorPath: ", successorPath
-                    fringe.push(successorPath)
+                    #print "successorPath: ", successorPath
+                    frontier.push(successorPath)
                 #else:
                     #print successor[0], " IS ALREADY EXPLORED!!"
-    return[]
+    
+    return []  
 
-    #util.raiseNotDefined()
 
 # Abbreviations
 bfs = breadthFirstSearch
