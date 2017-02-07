@@ -53,11 +53,11 @@ class SearchProblem:
         """
         util.raiseNotDefined()
 
-    def getCostOfActions(self, actions):
+    def getCostOfpath(self, path):
         """
-         actions: A list of actions to take
+         path: A list of path to take
 
-        This method returns the total cost of a particular sequence of actions.
+        This method returns the total cost of a particular sequence of path.
         The sequence must be composed of legal moves.
         """
         util.raiseNotDefined()
@@ -78,7 +78,7 @@ def depthFirstSearch(problem):
     """
     Search the deepest nodes in the search tree first.
 
-    Your search algorithm needs to return a list of actions that reaches the
+    Your search algorithm needs to return a list of path that reaches the
     goal. Make sure to implement a graph search algorithm.
 
     To get started, you might want to try some of these simple commands to
@@ -89,14 +89,14 @@ def depthFirstSearch(problem):
     print "Start's successors:", problem.getSuccessors(problem.getStartState())
     """
     "*** YOUR CODE HERE ***"
-    fringe = util.Stack() #stack as fringe
-    visited = set()  #set as visited
+    fringe = util.Stack()  # stack as fringe
+    visited = set()  # set as visited
     fringe.push((problem.getStartState(), []))
 
     while not fringe.isEmpty():
-        node, path = fringe.pop()  
+        node, path = fringe.pop()
         if problem.isGoalState(node):
-            return path  
+            return path
         if node not in visited:
             visited.add(node)
             for state, direction, cost in problem.getSuccessors(node):
@@ -108,8 +108,8 @@ def depthFirstSearch(problem):
 def breadthFirstSearch(problem):
     """Search the shallowest nodes in the search tree first."""
     "*** YOUR CODE HERE ***"
-    fringe = util.Queue() #queue as fringe
-    visited = [] #set as visited
+    fringe = util.Queue()  # queue as fringe
+    visited = []  # set as visited
     fringe.push((problem.getStartState(), []))
     visited.append(problem.getStartState())
 
@@ -127,8 +127,8 @@ def breadthFirstSearch(problem):
 def uniformCostSearch(problem):
     """Search the node of least total cost first."""
     "*** YOUR CODE HERE ***"
-    fringe = util.PriorityQueue() #priority queue as fringe
-    visited = {} #dictionary as visited
+    fringe = util.PriorityQueue()  # priority queue as fringe
+    visited = {}  # dictionary as visited
     fringe.push((problem.getStartState(), 0, []), 0)
     visited[problem.getStartState()] = 0
 
@@ -143,6 +143,7 @@ def uniformCostSearch(problem):
                              [direction]), sum_cost + cost)
     return None
 
+
 def nullHeuristic(state, problem=None):
     """
     A heuristic function estimates the cost from the node state to the nearest
@@ -154,41 +155,30 @@ def nullHeuristic(state, problem=None):
 def aStarSearch(problem, heuristic=nullHeuristic):
     """Search the node that has the lowest combined cost and heuristic first."""
     "*** YOUR CODE HERE ***"
+    # print "\n@@@@@@@@@"
+    # print "Start:", problem.getStartState()
+    # print "Is the start a goal?", problem.isGoalState(problem.getStartState())
+    # print "Start's successors:", problem.getSuccessors(problem.getStartState())
+    # print "@@@@@@@@@\n"
 
-    cost = lambda aPath: problem.getCostOfActions([x[1] for x in aPath]) + heuristic(aPath[len(aPath)-1][0], problem)
-    frontier = util.PriorityQueueWithFunction(cost)
+    fringe = util.PriorityQueue()
+    visited = {}
+    hcost = heuristic(problem.getStartState(), problem)
+    fringe.push((problem.getStartState(), hcost, []), hcost)
+    visited[problem.getStartState()] = hcost
 
-    explored = []
-    frontier.push([(problem.getStartState(), "Stop" , 0)])
-    
-    while not frontier.isEmpty():
-        #print "frontier: ", frontier.heap
-        path = frontier.pop()
-        #print "path len: ", len(path)
-        #print "path: ", path
-        
-        s = path[len(path)-1]
-        s = s[0]
-        #print "s: ", s
-        if problem.isGoalState(s):
-            #print "FOUND SOLUTION: ", [x[1] for x in path]
-            return [x[1] for x in path][1:]
-            
-        if s not in explored:
-            explored.append(s)
-            #print "EXPLORING: ", s
-            
-            for successor in problem.getSuccessors(s):
-                #print "SUCCESSOR: ", successor
-                if successor[0] not in explored:
-                    successorPath = path[:]
-                    successorPath.append(successor)
-                    #print "successorPath: ", successorPath
-                    frontier.push(successorPath)
-                #else:
-                    #print successor[0], " IS ALREADY EXPLORED!!"
-    
-    return []  
+    while not fringe.isEmpty():
+        node, sum_cost, path = fringe.pop()
+        nodeHeuristic = heuristic(node, problem)
+        if problem.isGoalState(node):
+            return path
+        for state, direction, cost in problem.getSuccessors(node):
+            stateHeuristic = heuristic(state, problem)
+            gcost = sum_cost + cost + stateHeuristic - nodeHeuristic
+            if state not in visited or visited[state] > gcost:
+                visited[state] = gcost
+                fringe.push((state, gcost, path + [direction]), gcost)
+    return None
 
 
 # Abbreviations
