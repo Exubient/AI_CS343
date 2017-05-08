@@ -3,8 +3,9 @@
 # Licensing Information:  You are free to use or extend these projects for
 # educational purposes provided that (1) you do not distribute or publish
 # solutions, (2) you retain this notice, and (3) you provide clear
-# attribution to UC Berkeley, including a link to http://ai.berkeley.edu.
-# 
+# attribution to UC Berkeley, including a link to
+# http://inst.eecs.berkeley.edu/~cs188/pacman/pacman.html
+#
 # Attribution Information: The Pacman AI projects were developed at UC Berkeley.
 # The core projects and autograders were primarily created by John DeNero
 # (denero@cs.berkeley.edu) and Dan Klein (klein@cs.berkeley.edu).
@@ -28,7 +29,7 @@ class PerceptronClassifierPacman(PerceptronClassifier):
     def classify(self, data ):
         """
         Data contains a list of (datum, legal moves)
-        
+
         Datum is a Counter representing the features of each GameState.
         legalMoves is a list of legal moves for that GameState.
         """
@@ -42,12 +43,17 @@ class PerceptronClassifierPacman(PerceptronClassifier):
 
 
     def train( self, trainingData, trainingLabels, validationData, validationLabels ):
-        self.features = trainingData[0][0]['Stop'].keys() # could be useful later
+        features = trainingData[0][0]['Stop'].keys() # could be useful later
         # DO NOT ZERO OUT YOUR WEIGHTS BEFORE STARTING TRAINING, OR
         # THE AUTOGRADER WILL LIKELY DEDUCT POINTS.
 
         for iteration in range(self.max_iterations):
             print "Starting iteration ", iteration, "..."
-            for i in range(len(trainingData)):
-                "*** YOUR CODE HERE ***"
-                util.raiseNotDefined()
+
+            for features, label in zip(trainingData, trainingLabels): # iteration
+                for featureIndex in features[1]:
+                    for feature, value in features[0][featureIndex].items():
+                        if featureIndex == label:
+                            self.weights[feature] += value # update add
+                        else:
+                            self.weights[feature] -= value # update subtract

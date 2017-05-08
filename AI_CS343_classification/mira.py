@@ -3,8 +3,9 @@
 # Licensing Information:  You are free to use or extend these projects for
 # educational purposes provided that (1) you do not distribute or publish
 # solutions, (2) you retain this notice, and (3) you provide clear
-# attribution to UC Berkeley, including a link to http://ai.berkeley.edu.
-# 
+# attribution to UC Berkeley, including a link to
+# http://inst.eecs.berkeley.edu/~cs188/pacman/pacman.html
+#
 # Attribution Information: The Pacman AI projects were developed at UC Berkeley.
 # The core projects and autograders were primarily created by John DeNero
 # (denero@cs.berkeley.edu) and Dan Klein (klein@cs.berkeley.edu).
@@ -31,6 +32,7 @@ class MiraClassifier:
         self.legalLabels = legalLabels
         self.max_iterations = max_iterations
         self.initializeWeightsToZero()
+        self.weights = {}
 
     def initializeWeightsToZero(self):
         "Resets the weights of each label to zero vectors"
@@ -60,8 +62,50 @@ class MiraClassifier:
         datum is a counter from features to values for those features
         representing a vector of values.
         """
-        "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        weights = {}
+        c_scores= []
+        for cGridindex in Cgrid:
+
+            # Reset the weights
+            self.weights = dict((label, util.Counter()) for label in self.legalLabels)
+
+            for iteration in range(self.max_iterations):
+                print "Starting MIRA iteration ", iteration, "..."
+                print(len(trainingLabels))
+                print(len(trainingData))
+                for features, label in zip(trainingData, trainingLabels):
+                    labelValue = self.classify([features])[0]
+                    if label != labelValue:
+                        # given function from the problem
+                        tauFV = cGridindex
+                        tauSV = ((self.weights[labelValue] - self.weights[label]) * features + 1.) / (2 * (features * features))
+                        tau = min(tauFV, tauSV)
+                        delta = features.copy()
+                        for key, value in delta.items():
+                            delta[key] = value * tau
+                        self.weights[label] += delta
+                        self.weights[labelValue] -= delta
+
+            weights[cGridindex] = self.weights
+            result = 0
+            for label in validationLabels:
+                if label == labelValue:
+                    result += 1
+            c_scores.append(result)
+
+        # best C value
+        maxC = Cgrid[0]
+        maxScore = -1
+
+        for cGridindex, c_score in zip(Cgrid, c_scores):
+            if c_score > maxScore or (c_score == maxScore):
+                maxC = cGridindex
+                maxScore = c_score
+
+        self.weights = weights[maxC]
+        self.C = maxC
+        return maxC
+
 
     def classify(self, data ):
         """
@@ -77,5 +121,3 @@ class MiraClassifier:
                 vectors[l] = self.weights[l] * datum
             guesses.append(vectors.argMax())
         return guesses
-
-

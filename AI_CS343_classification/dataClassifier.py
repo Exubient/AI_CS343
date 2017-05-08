@@ -3,8 +3,9 @@
 # Licensing Information:  You are free to use or extend these projects for
 # educational purposes provided that (1) you do not distribute or publish
 # solutions, (2) you retain this notice, and (3) you provide clear
-# attribution to UC Berkeley, including a link to http://ai.berkeley.edu.
-# 
+# attribution to UC Berkeley, including a link to
+# http://inst.eecs.berkeley.edu/~cs188/pacman/pacman.html
+#
 # Attribution Information: The Pacman AI projects were developed at UC Berkeley.
 # The core projects and autograders were primarily created by John DeNero
 # (denero@cs.berkeley.edu) and Dan Klein (klein@cs.berkeley.edu).
@@ -23,7 +24,7 @@ import mira
 import samples
 import sys
 import util
-from pacman import GameState
+from pacman import GameState, Directions
 
 TEST_SET_SIZE = 100
 DIGIT_DATUM_WIDTH=28
@@ -72,17 +73,56 @@ def enhancedFeatureExtractorDigit(datum):
     for this datum (datum is of type samples.Datum).
 
     ## DESCRIBE YOUR ENHANCED FEATURES HERE...
+    - Simple horizontal and vertical edge detection
+    - Calculate number of contiguous regions
 
     ##
     """
+    # get features
     features =  basicFeatureExtractorDigit(datum)
 
-    "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    # Compute gradients
+    for x in range(1, DIGIT_DATUM_WIDTH):
+        for y in range(1, DIGIT_DATUM_HEIGHT): # iterate as coordinates
+            features[("horizontal", x, y)] = int(datum.getPixel(x, y) >
+                                            datum.getPixel(x - 1, y))
+
+            features[("vertical", x, y)] = int(datum.getPixel(x, y) >
+                                            datum.getPixel(x, y - 1))
+
+    # helper function -> for continuous area
+    def getNeighbors(x, y):
+        neighbors = []
+        if x > 0:
+            neighbors.append((x - 1, y))
+        if x < DIGIT_DATUM_WIDTH - 1:
+            neighbors.append((x + 1, y))
+        if y > 0:
+            neighbors.append((x, y - 1))
+        if y < DIGIT_DATUM_HEIGHT - 1:
+            neighbors.append((x, y + 1))
+        return neighbors # return neighbor coordinates
+
+    area = set() 
+    contiguous = 0
+    for x in xrange(DIGIT_DATUM_WIDTH):
+        for y in xrange(DIGIT_DATUM_HEIGHT):
+            if (x, y) not in area and datum.getPixel(x, y) < 2:
+                contiguous += 1
+
+                stack = [(x, y)] #use stack
+                while stack: # until stak is empty
+                    point = stack.pop()
+                    area.add(point)
+                    for neighbor in getNeighbors(*point):
+                        if datum.getPixel(*neighbor) < 2 and neighbor not in area:
+                            stack.append(neighbor)
+
+    features["contiguous0"] = contiguous % 2
+    features["contiguous1"] = (contiguous >> 1) % 2
+    features["contiguous2"] = (contiguous >> 2) % 2
 
     return features
-
-
 
 def basicFeatureExtractorPacman(state):
     """
@@ -122,10 +162,45 @@ def enhancedPacmanFeatures(state, action):
     For each state, this function is called with each legal action.
     It should return a counter with { <feature name> : <feature value>, ... }
     """
-    features = util.Counter()
-    "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
-    return features
+    features = util.Counter() # to return a counter
+    features["STOP"] = int(action == Directions.STOP) * 100
+
+    # initiate variables  (using successor state)
+    succ = state.generateSuccessor(0, action)
+    pac_pos = succ.getPacmanPosition()
+    ghosts = succ.getGhostPositions()
+    capsules = succ.getCapsules()
+
+    state_food = state.getFood()
+    food = [(x, y)
+            for x, row in enumerate(state_food)
+            for y, food in enumerate(row)
+            if food] # food's coordinate
+
+    nearest_ghosts = sorted([util.manhattanDistance(pac_pos, i) for i in ghosts])
+    # nearest ghosts' distance
+
+    features["nearest_ghost"] = nearest_ghosts[0] * 1.0
+
+    for i in xrange(min(len(nearest_ghosts), 1)):
+        features[("ghost", i)] = 5 / (0.1 + nearest_ghosts[i])
+
+    nearest_caps = sorted([util.manhattanDistance(pac_pos, i) for i in capsules])
+
+    for i in xrange(min(len(nearest_caps), 1)):
+        features[("capsule", i)] = 15 / (1 + nearest_caps[i])
+
+    nearest_food = sorted([util.manhattanDistance(pac_pos, i) for i in food])
+
+    for i, weight in zip(xrange(min(len(nearest_food), 5)), [1.3, 0.8] + [0.9] * 3):
+        features[("food", i)] = weight * nearest_food[i]
+
+    features["capsule count"] = len(capsules) * 10
+    features["win"] = state.isWin()
+    features["lose"] = state.isLose()
+    features["score"] = state.getScore() * 10
+
+    return features #return features counter
 
 
 def contestFeatureExtractorDigit(datum):
@@ -166,16 +241,16 @@ def analysis(classifier, guesses, testLabels, testData, rawTestData, printImage)
 
     # Put any code here...
     # Example of use:
-    # for i in range(len(guesses)):
-    #     prediction = guesses[i]
-    #     truth = testLabels[i]
-    #     if (prediction != truth):
-    #         print "==================================="
-    #         print "Mistake on example %d" % i
-    #         print "Predicted %d; truth is %d" % (prediction, truth)
-    #         print "Image: "
-    #         print rawTestData[i]
-    #         break
+    for i in range(len(guesses)):
+        prediction = guesses[i]
+        truth = testLabels[i]
+        if (prediction != truth):
+            print "==================================="
+            print "Mistake on example %d" % i
+            print "Predicted %s; truth is %s" % (prediction, truth)
+            print "Image: "
+            print rawTestData[i]
+            break
 
 
 ## =====================
@@ -364,7 +439,7 @@ def runClassifier(args, options):
     featureFunction = args['featureFunction']
     classifier = args['classifier']
     printImage = args['printImage']
-    
+
     # Load data
     numTraining = options.training
     numTest = options.test
